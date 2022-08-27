@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { localDatabaseConfig } from '../ormconfig';
 import { WalletModule } from './wallet/wallet.module';
+import { TransactionModule } from './transaction/transaction.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { WalletModule } from './wallet/wallet.module';
     TypeOrmModule.forRoot(localDatabaseConfig),
     UserModule,
     WalletModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
