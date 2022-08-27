@@ -3,8 +3,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Wallet } from '../../wallet/entities/wallet.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -19,6 +22,12 @@ export class User extends BaseEntity {
 
   @Column({ nullable: false, type: 'varchar' })
   password: string;
+
+  @OneToOne(() => Wallet, (wallet) => wallet.user, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
+  wallet: Wallet;
 
   @CreateDateColumn()
   createdAt: Date;
