@@ -3,10 +3,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { TransactionPurpose } from '../enums/transaction-purpose.enum';
+import { Wallet } from '../../wallet/entities/wallet.entity';
 
 @Entity('transactions')
 export class Transaction extends BaseEntity {
@@ -14,7 +16,7 @@ export class Transaction extends BaseEntity {
   id: number;
 
   @Column({ nullable: false })
-  userId: number;
+  walletId: number;
 
   @Column({
     nullable: false,
@@ -51,6 +53,11 @@ export class Transaction extends BaseEntity {
 
   @Column({ nullable: false, type: 'jsonb', name: 'meta-data' })
   metaData: any;
+
+  @ManyToOne(() => Wallet, (wallets) => wallets.transactions, {
+    onDelete: 'CASCADE',
+  })
+  wallet: Wallet;
 
   @CreateDateColumn()
   createdAt: Date;

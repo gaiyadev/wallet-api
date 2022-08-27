@@ -4,10 +4,13 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { Transaction } from '../../transaction/entities/transaction.entity';
+import { WalletTransaction } from '../../wallet-transaction/entities/wallet-transaction.entity';
 
 @Entity('wallets')
 export class Wallet extends BaseEntity {
@@ -31,6 +34,22 @@ export class Wallet extends BaseEntity {
   })
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Transaction, (transactions) => transactions.wallet, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
+  transactions: Transaction[];
+
+  @OneToMany(
+    () => WalletTransaction,
+    (walletTransactions) => walletTransactions.wallet,
+    {
+      eager: true,
+      onDelete: 'CASCADE',
+    },
+  )
+  walletTransactions: WalletTransaction[];
 
   @CreateDateColumn()
   createdAt: Date;
