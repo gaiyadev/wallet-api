@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { TransactionPurpose } from '../transaction/enums/transaction-purpose.enum';
 import { TransactionType } from '../transaction/enums/transaction-type.enum';
+import { TransferFund } from './dto/transfer-fund.dto';
 
 @Injectable()
 export class WalletService {
@@ -49,7 +50,7 @@ export class WalletService {
     // Check for wallet existence
     const wallet = await this.walletRepository.findOne({ userId: user.id });
     if (!wallet) {
-      throw new NotFoundException();
+      throw new NotFoundException('Wallet not found');
     }
     console.log(user.email);
 
@@ -74,23 +75,7 @@ export class WalletService {
       );
       if (charge.data.status === true) {
         return charge.data;
-      } // const transaction = new Transaction();
-      // transaction.transactionType = transactionType;
-      // transaction.transactionPurpose = transactionPurpose;
-      // transaction.amount = amount;
-      // transaction.balanceBefore = Number(wallet.balance);
-      // transaction.balanceAfter = Number(wallet.balance) + Number(amount);
-      // transaction.wallet = user.wallet.id as any;
-      // transaction.transactionReference = uuidv4();
-      // const savedTransaction = await this.transactionRepository.save(
-      //   transaction,
-      // );
-      // return {
-      //   message: 'Charged Successful',
-      //   status: 'Success',
-      //   statusCode: 201,
-      //   data: savedTransaction.transactionType,
-      // };
+      } 
     } catch (e) {
       throw new InternalServerErrorException('Something went wrong' + e);
     }
@@ -167,6 +152,11 @@ export class WalletService {
     }
     return found;
   }
+
+  async transferFund(transferFund:TransferFund, user: User ): Promise<any> {
+    return transferFund
+  }
+
 
   findAll() {
     return `This action returns all wallet`;

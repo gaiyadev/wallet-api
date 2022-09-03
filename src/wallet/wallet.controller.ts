@@ -19,9 +19,9 @@ import { GetUser } from '../user/custom-decorators/user-auth.decorator';
 import { User } from '../user/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTransactionDto } from '../transaction/dto/create-transaction.dto';
+import { TransferFund } from './dto/transfer-fund.dto';
 
 @Controller('wallets')
-// @UseGuards(AuthGuard('user'))
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
@@ -52,6 +52,13 @@ export class WalletController {
   @HttpCode(HttpStatus.CREATED)
   async addFund(@Param('reference') reference: string, id: string) {
     return await this.walletService.addFund(reference, id);
+  }
+
+  @Post('/transfer')
+  @UseGuards(AuthGuard('user'))
+  @UsePipes(ValidationPipe)
+  async transferFund(@Body() transferFund:TransferFund, @GetUser() user: User ): Promise<any> {
+    return await this.walletService.transferFund(transferFund, user)
   }
 
   @Get()
