@@ -18,20 +18,40 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 import { GetUser } from '../user/custom-decorators/user-auth.decorator';
 import { User } from '../user/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { CreateTransactionDto } from '../transaction/dto/create-transaction.dto';
 
 @Controller('wallets')
+// @UseGuards(AuthGuard('user'))
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
   @Post('/')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(ValidationPipe)
-  @UseGuards(AuthGuard('user'))
   async create(
     @Body() createWalletDto: CreateWalletDto,
     @GetUser() user: User,
   ): Promise<any> {
     return await this.walletService.create(createWalletDto, user);
+  }
+
+  @Post('/transaction')
+  @HttpCode(HttpStatus.CREATED)
+  @UsePipes(ValidationPipe)
+  async createTransaction(
+    @Body() createTransactionDto: CreateTransactionDto,
+    @GetUser() user: User,
+  ): Promise<any> {
+    return await this.walletService.createTransaction(
+      createTransactionDto,
+      user,
+    );
+  }
+
+  @Get('/verify-payment/:reference/:id')
+  @HttpCode(HttpStatus.CREATED)
+  async addFund(@Param('reference') reference: string, id: string) {
+    return await this.walletService.addFund(reference, id);
   }
 
   @Get()

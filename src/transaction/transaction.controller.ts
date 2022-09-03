@@ -20,18 +20,21 @@ import { GetUser } from '../user/custom-decorators/user-auth.decorator';
 import { User } from '../user/entities/user.entity';
 
 @Controller('transactions')
+@UseGuards(AuthGuard('user'))
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
   @Post('/')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(ValidationPipe)
-  @UseGuards(AuthGuard('user'))
-  async create(
+  async createTransaction(
     @Body() createTransactionDto: CreateTransactionDto,
     @GetUser() user: User,
   ): Promise<any> {
-    return await this.transactionService.create(createTransactionDto, user);
+    return await this.transactionService.createTransaction(
+      createTransactionDto,
+      user,
+    );
   }
 
   @Get()

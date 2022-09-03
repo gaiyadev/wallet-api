@@ -4,6 +4,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './repository/user.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { Repository } from 'typeorm';
+import { Wallet } from '../wallet/entities/wallet.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UserService {
@@ -12,6 +15,9 @@ export class UserService {
     private readonly userRepository: UserRepository,
 
     private readonly jwtService: JwtService,
+
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
   ) {}
 
   /*
@@ -20,6 +26,11 @@ export class UserService {
   async signUp(signUpDto: SignUpDto): Promise<any> {
     const user = await this.userRepository.signUp(signUpDto);
 
+    const wallet = new Wallet();
+    wallet.walletUuid = uuidv4();
+    wallet.userId = user.id as any;
+    await this.walletRepository.save(wallet);
+
     return {
       message: 'Account created successfully',
       status: 'Success',
@@ -27,6 +38,7 @@ export class UserService {
       data: {
         userUuid: user.userUuid,
         email: user.email,
+        id: user.id,
       },
     };
   }
@@ -50,6 +62,7 @@ export class UserService {
       data: {
         userUuid: userUuid,
         email: email,
+        id: user.id,
       },
     };
   }

@@ -12,7 +12,7 @@ export class TransactionService {
     private readonly transactionRepository: TransactionRepository,
   ) {}
 
-  async create(
+  async createTransaction(
     createTransactionDto: CreateTransactionDto,
     user: User,
   ): Promise<any> {
@@ -24,7 +24,7 @@ export class TransactionService {
       message: 'Charged Successful',
       status: 'Success',
       statusCode: 201,
-      data: null,
+      data: transaction.transactionType,
     };
   }
 
