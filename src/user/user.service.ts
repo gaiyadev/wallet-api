@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { Wallet } from '../wallet/entities/wallet.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { walletIdentity } from '../wallet/untils/wallet-identity';
 
 @Injectable()
 export class UserService {
@@ -29,6 +30,7 @@ export class UserService {
     const wallet = new Wallet();
     wallet.walletUuid = uuidv4();
     wallet.userId = user.id as any;
+    wallet.walletId = (await walletIdentity()) as any;
     await this.walletRepository.save(wallet);
 
     return {

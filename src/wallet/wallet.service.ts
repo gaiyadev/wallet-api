@@ -13,6 +13,8 @@ import { CreateTransactionDto } from '../transaction/dto/create-transaction.dto'
 import { Transaction } from '../transaction/entities/transaction.entity';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { TransactionPurpose } from '../transaction/enums/transaction-purpose.enum';
+import { TransactionType } from '../transaction/enums/transaction-type.enum';
 
 @Injectable()
 export class WalletService {
@@ -95,14 +97,31 @@ export class WalletService {
   }
 
   async addFund(reference: any, id: any) {
+    const findWallet = await this.getWallet(id);
+    if (!findWallet) {
+      throw new NotFoundException('Wallet not found');
+    }
     const verify = await this.verifyPayment(reference);
     console.log(verify);
     if (verify.data.status === 'success') {
+      const createTransaction = await this.creatTransaction(
+        TransactionPurpose.funding,
+        TransactionType.Credit,
+        verify.data.amount,
+        id,
+        id,
+        'dsdsd',
+      );
+      if (!createTransaction) {
+        throw new InternalServerErrorException('An error occurred');
+      }
       return {
-        message: 'Funded successfully',
+        message: 'Wallet Funded successfully',
+        balance: '5600',
+        status: 'Success',
+        statusCode: 201,
       };
     }
-    return 'not verofy';
   }
 
   async verifyPayment(reference: string) {
@@ -119,7 +138,35 @@ export class WalletService {
     }
   }
 
-  async creatTransaction() {}
+  async creatTransaction(
+    transactionPurpose,
+    transactionType,
+    amount,
+    wallet,
+    user,
+    transactionReference,
+  ) {
+    const transaction = new Transaction();
+    transaction.transactionType = transactionType;
+    transaction.transactionPurpose = transactionPurpose;
+    transaction.amount = amount;
+    transaction.balanceBefore = Number(wallet.balance);
+    transaction.balanceAfter = Number(wallet.balance) + Number(amount);
+    transaction.wallet = user.wallet.id as any;
+    transaction.transactionReference = transactionReference;
+    transaction.transactionUuid = uuidv4();
+    return await this.transactionRepository.save(transaction);
+  }
+
+  async getWallet(id: number): Promise<any> {
+    const found = await this.walletRepository.findOne({
+      where: { userId: id },
+    });
+    if (!found) {
+      throw new NotFoundException('Wallet not found');
+    }
+    return found;
+  }
 
   findAll() {
     return `This action returns all wallet`;

@@ -20,11 +20,19 @@ export class Transaction extends BaseEntity {
 
   @Column({
     nullable: false,
-    type: 'uuid',
+    type: 'varchar',
     name: 'transaction_reference',
     unique: true,
   })
   transactionReference: string;
+
+  @Column({
+    nullable: false,
+    type: 'varchar',
+    name: 'transaction_uuid',
+    unique: true,
+  })
+  transactionUuid: string;
 
   @Column({
     nullable: false,

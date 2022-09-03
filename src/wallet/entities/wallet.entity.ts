@@ -26,6 +26,9 @@ export class Wallet extends BaseEntity {
   @Column({ nullable: true, type: 'text' })
   name: string;
 
+  @Column({ nullable: true, type: 'varchar', name: 'wallet_id' })
+  walletId: string;
+
   @Column({ nullable: false, type: 'decimal', default: 0 })
   balance: string;
 
