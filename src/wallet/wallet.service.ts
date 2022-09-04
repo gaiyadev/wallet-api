@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -15,7 +17,8 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { TransactionPurpose } from '../transaction/enums/transaction-purpose.enum';
 import { TransactionType } from '../transaction/enums/transaction-type.enum';
-import { TransferFund } from './dto/transfer-fund.dto';
+import { WalletTransferFund } from './dto/transfer-fund.dto';
+import { Transfer } from './enums/transfer.enum';
 
 @Injectable()
 export class WalletService {
@@ -48,11 +51,11 @@ export class WalletService {
       createTransactionDto;
 
     // Check for wallet existence
-    const wallet = await this.walletRepository.findOne({ userId: user.id });
-    if (!wallet) {
-      throw new NotFoundException('Wallet not found');
-    }
-    console.log(user.email);
+    // const wallet = await this.walletRepository.findOne({ userId: user.id });
+    // if (!wallet) {
+    //   throw new NotFoundException('Wallet not found');
+    // }
+    // console.log(user.email);
 
     // Calling paystack charge api
     try {
@@ -81,28 +84,39 @@ export class WalletService {
     }
   }
 
-  async addFund(reference: any, id: any) {
-    const findWallet = await this.getWallet(id);
-    if (!findWallet) {
-      throw new NotFoundException('Wallet not found');
+  async addFund(reference: string, id: number) {
+    const wallet = await this.walletRepository.findOne({where: {userId: id}})
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found'!!);
     }
     const verify = await this.verifyPayment(reference);
-    console.log(verify);
     if (verify.data.status === 'success') {
-      const createTransaction = await this.creatTransaction(
-        TransactionPurpose.funding,
-        TransactionType.Credit,
-        verify.data.amount,
-        id,
-        id,
-        'dsdsd',
-      );
-      if (!createTransaction) {
-        throw new InternalServerErrorException('An error occurred');
-      }
+      const paidAmount = Number(verify.data.amount) / 100
+      wallet.balance = Number(wallet.balance) + paidAmount as any
+      await this.walletRepository.save(wallet)
+
+await this.creatTransaction({
+     paidAmount: paidAmount,
+    metaData: verify.data.authorization,
+    reference: verify.data.reference, 
+    transactionPurpose: TransactionPurpose.funding, 
+    transactionType: TransactionType.Credit,
+    wallet,
+})
+      // const transaction = new Transaction()
+      // transaction.transactionType = TransactionType.Credit;
+      // transaction.transactionPurpose = TransactionPurpose.funding;
+      // transaction.amount = paidAmount;
+      // transaction.balanceBefore = Number(wallet.balance);
+      // transaction.balanceAfter = Number(wallet.balance) + paidAmount;
+      // transaction.walletId = wallet.id as any;
+      // transaction.transactionReference = verify.data.reference;
+      // transaction.transactionUuid = uuidv4();
+      // transaction.metaData = verify.data.authorization
+      // await this.transactionRepository.save(transaction);
       return {
         message: 'Wallet Funded successfully',
-        balance: '5600',
+        balance: wallet.balance,
         status: 'Success',
         statusCode: 201,
       };
@@ -124,37 +138,78 @@ export class WalletService {
   }
 
   async creatTransaction(
-    transactionPurpose,
+    {transactionPurpose,
     transactionType,
-    amount,
     wallet,
-    user,
-    transactionReference,
+    metaData,
+    reference, paidAmount}
   ) {
-    const transaction = new Transaction();
-    transaction.transactionType = transactionType;
-    transaction.transactionPurpose = transactionPurpose;
-    transaction.amount = amount;
-    transaction.balanceBefore = Number(wallet.balance);
-    transaction.balanceAfter = Number(wallet.balance) + Number(amount);
-    transaction.wallet = user.wallet.id as any;
-    transaction.transactionReference = transactionReference;
-    transaction.transactionUuid = uuidv4();
-    return await this.transactionRepository.save(transaction);
+    const transaction = new Transaction()
+      transaction.transactionType = transactionType ;
+      transaction.transactionPurpose =  transactionPurpose;
+      transaction.amount = paidAmount;
+      transaction.balanceBefore = Number(wallet.balance);
+      transaction.balanceAfter = Number(wallet.balance) + paidAmount;
+      transaction.walletId = wallet.id as any;
+      transaction.transactionReference = reference;
+      transaction.transactionUuid = uuidv4();
+      transaction.metaData = metaData;
+    return  await this.transactionRepository.save(transaction);
   }
 
   async getWallet(id: number): Promise<any> {
     const found = await this.walletRepository.findOne({
       where: { userId: id },
     });
+
     if (!found) {
       throw new NotFoundException('Wallet not found');
     }
     return found;
   }
 
-  async transferFund(transferFund:TransferFund, user: User ): Promise<any> {
-    return transferFund
+  async walletTransferFund(transferFund:WalletTransferFund, user: User ): Promise<any> {
+      const {accountId, amount } = transferFund
+
+      const wallet = await this.getWallet(user.id)
+      if(!wallet) {
+        throw new NotFoundException()
+      }
+
+      const account = await this.walletRepository.findOne({where: {walletId: accountId}})
+
+      if(!account) {
+        throw new BadRequestException('Account not found')
+
+      }
+
+      if(amount < wallet.balance) {
+        throw new ForbiddenException('Insufficient found')
+      }
+     
+      // Debiting the sender
+      wallet.balance = Number(wallet.balance) - Number(amount) as any
+      await this.walletRepository.save(wallet)
+
+      // Crediting the recipient
+      const paidAmount = Number(amount)
+      account.balance = Number(account.balance) + paidAmount as any
+      await this.walletRepository.save(wallet)
+
+await this.creatTransaction({
+     paidAmount: transferFund.amount,
+    metaData: null,
+    reference: account.walletId, 
+    transactionPurpose: TransactionPurpose.Transfer, 
+    transactionType: TransactionType.Debit,
+    wallet,
+})
+    return {
+      message: "Charge successfully",
+      status: "Success",
+      statusCode: 201,
+      data: wallet.balance
+    }
   }
 
 
@@ -162,8 +217,10 @@ export class WalletService {
     return `This action returns all wallet`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} wallet`;
+ async findOne(id: number): Promise<any> {
+    const wallet = await this.getWallet(id)
+    return wallet
+    
   }
 
   update(id: number, updateWalletDto: UpdateWalletDto) {

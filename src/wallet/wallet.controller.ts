@@ -11,6 +11,7 @@ import {
   UsePipes,
   ValidationPipe,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
@@ -19,7 +20,7 @@ import { GetUser } from '../user/custom-decorators/user-auth.decorator';
 import { User } from '../user/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTransactionDto } from '../transaction/dto/create-transaction.dto';
-import { TransferFund } from './dto/transfer-fund.dto';
+import { WalletTransferFund } from './dto/transfer-fund.dto';
 
 @Controller('wallets')
 export class WalletController {
@@ -50,15 +51,15 @@ export class WalletController {
 
   @Get('/verify-payment/:reference/:id')
   @HttpCode(HttpStatus.CREATED)
-  async addFund(@Param('reference') reference: string, id: string) {
+  async addFund(@Param('reference') reference: string, @Param() id: number) {
     return await this.walletService.addFund(reference, id);
   }
 
-  @Post('/transfer')
+  @Post('/wallet-transfer')
   @UseGuards(AuthGuard('user'))
   @UsePipes(ValidationPipe)
-  async transferFund(@Body() transferFund:TransferFund, @GetUser() user: User ): Promise<any> {
-    return await this.walletService.transferFund(transferFund, user)
+  async walletTransferFund(@Body() transferFund:WalletTransferFund, @GetUser() user: User ): Promise<any> {
+    return await this.walletService.walletTransferFund(transferFund, user)
   }
 
   @Get()
@@ -66,9 +67,9 @@ export class WalletController {
     return this.walletService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.walletService.findOne(+id);
+  @Get('/:id')
+ async findOne(@Param('id', ParseIntPipe) id: number): Promise<any> {
+    return await this.walletService.findOne(id);
   }
 
   @Patch(':id')

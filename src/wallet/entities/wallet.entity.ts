@@ -44,15 +44,15 @@ export class Wallet extends BaseEntity {
   })
   transactions: Transaction[];
 
-  @OneToMany(
-    () => WalletTransaction,
-    (walletTransactions) => walletTransactions.wallet,
-    {
-      eager: true,
-      onDelete: 'CASCADE',
-    },
-  )
-  walletTransactions: WalletTransaction[];
+  // @OneToMany(
+  //   () => WalletTransaction,
+  //   (walletTransactions) => walletTransactions.wallet,
+  //   {
+  //     eager: true,
+  //     onDelete: 'CASCADE',
+  //   },
+  // )
+  // walletTransactions: WalletTransaction[];
 
   @CreateDateColumn()
   createdAt: Date;

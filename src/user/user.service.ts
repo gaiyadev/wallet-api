@@ -30,7 +30,7 @@ export class UserService {
     const wallet = new Wallet();
     wallet.walletUuid = uuidv4();
     wallet.userId = user.id as any;
-    wallet.walletId = (await walletIdentity()) as any;
+    wallet.walletId = await walletIdentity() as any;
     await this.walletRepository.save(wallet);
 
     return {

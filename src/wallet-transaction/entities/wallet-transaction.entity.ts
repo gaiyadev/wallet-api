@@ -22,10 +22,10 @@ export class WalletTransaction extends BaseEntity {
   @Column({ nullable: false, type: 'decimal' })
   amount: number;
 
-  @ManyToOne(() => Wallet, (wallets) => wallets.walletTransactions, {
-    onDelete: 'CASCADE',
-  })
-  wallet: Wallet;
+  // @ManyToOne(() => Wallet, (wallets) => wallets.walletTransactions, {
+  //   onDelete: 'CASCADE',
+  // })
+  // wallet: Wallet;
 
   @CreateDateColumn()
   createdAt: Date;
